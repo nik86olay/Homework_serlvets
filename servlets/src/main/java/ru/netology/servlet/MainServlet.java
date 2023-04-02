@@ -8,51 +8,64 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainServlet extends HttpServlet {
-  private PostController controller;
+    private PostController controller;
+    private static final String HTTP_METH_GET = "GET";
+    private static final String HTTP_METH_POST = "POST";
+    private static final String HTTP_METH_DEL = "DELETE";
+    private static final String HTTP_PATH = "/api/posts";
+    private static final String HTTP_PATH_ID = "/api/posts/\\d+";
 
-  @Override
-  public void init() {
-    final var repository = new PostRepository();
-    final var service = new PostService(repository);
-    controller = new PostController(service);
-  }
 
-  @Override
-  protected void service(HttpServletRequest req, HttpServletResponse resp) {
-    // если деплоились в root context, то достаточно этого
-    try {
-      final var path = req.getRequestURI();
-      final var method = req.getMethod();
-      // primitive routing
-      if (primitiveRouting(req, resp, path, method)) return;
-      resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-    } catch (Exception e) {
-      e.printStackTrace();
+    @Override
+    public void init() {
+        final var repository = new PostRepository();
+        final var service = new PostService(repository);
+        controller = new PostController(service);
+    }
 
-      resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-    }
-  }
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) {
+        // если деплоились в root context, то достаточно этого
+        try {
+            final var path = req.getRequestURI();
+            final var method = req.getMethod();
+            // primitive routing
+            if (method.equals(HTTP_METH_GET)) {
+                actionChoiceGet(path, resp);
+                return;
+            }
+            if (method.equals(HTTP_METH_POST) && path.equals(HTTP_PATH)) {
+                controller.save(req.getReader(), resp);
+                return;
+            }
+            if (method.equals(HTTP_METH_DEL) && path.matches(HTTP_PATH_ID)) {
+                controller.removeById(path, resp);
+                return;
+            }
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        } catch (Exception e) {
+            e.printStackTrace();
 
-  private boolean primitiveRouting(HttpServletRequest req, HttpServletResponse resp, String path, String method) throws IOException {
-    if (method.equals("GET") && path.equals("/api/posts")) {
-      controller.all(resp);
-      return true;
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
     }
-    if (method.equals("GET") && path.matches("/api/posts/\\d+")) {
-      controller.getById(path, resp);
-      return true;
+
+    private void actionChoiceGet(String path, HttpServletResponse resp) {
+        switch (path) {
+            case HTTP_PATH:
+                controller.all(resp);
+                break;
+            case HTTP_PATH_ID:
+                controller.getById(path, resp);
+                break;
+            default:
+                break;
+
+        }
     }
-    if (method.equals("POST") && path.equals("/api/posts")) {
-      controller.save(req.getReader(), resp);
-      return true;
-    }
-    if (method.equals("DELETE") && path.matches("/api/posts/\\d+")) {
-      controller.removeById(path, resp);
-      return true;
-    }
-    return false;
-  }
 }
 
