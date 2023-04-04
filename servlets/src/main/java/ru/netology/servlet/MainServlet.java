@@ -1,5 +1,6 @@
 package ru.netology.servlet;
 
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import ru.netology.JavaConfig;
 import ru.netology.controller.PostController;
 import ru.netology.repository.PostRepository;
