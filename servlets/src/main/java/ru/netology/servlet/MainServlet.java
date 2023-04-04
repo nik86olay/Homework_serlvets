@@ -55,16 +55,11 @@ public class MainServlet extends HttpServlet {
     }
 
     private void actionChoiceGet(String path, HttpServletResponse resp) {
-        switch (path) {
-            case HTTP_PATH:
-                controller.all(resp);
-                break;
-            case HTTP_PATH_ID:
-                controller.getById(path, resp);
-                break;
-            default:
-                break;
-
+        if (path.equals(HTTP_PATH)) {
+            controller.all(resp);
+        }
+        if (path.matches(HTTP_PATH_ID)) {
+            controller.getById(path, resp);
         }
     }
 }
